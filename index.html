@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quotex Signal Lab V3</title>
+<style>
+:root{--bg:#07111f;--panel:#101d30;--panel2:#0c1727;--line:#263850;--text:#edf4ff;--muted:#9bb0ca;--green:#27d6a0;--red:#ff6378;--gold:#ffc766;--blue:#6ea8ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#132b47 0,#07111f 55%);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:20px 16px 14px;max-width:1200px;margin:auto;display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#31e6b1,#478cff);display:grid;place-items:center;color:#06111e;font-size:22px;font-weight:900}
+h1{font-size:21px;margin:0}header p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.wrap{max-width:1200px;margin:auto;padding:0 14px 28px;display:grid;grid-template-columns:330px 1fr;gap:14px}
+.panel{background:linear-gradient(180deg,rgba(16,29,48,.97),rgba(10,22,38,.97));border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 12px 34px #0002}
+h2{font-size:15px;margin:0 0 13px}label{display:block;color:var(--muted);font-size:12px;margin:12px 0 6px}
+select,input,button{font:inherit;width:100%;border-radius:10px;border:1px solid #334963;background:#081525;color:var(--text);padding:11px}
+button{border:0;background:linear-gradient(100deg,#20d7a0,#60a7ff);color:#061321;font-weight:800;cursor:pointer;margin-top:14px}
+button:disabled{opacity:.6}
+.small{font-size:12px;color:var(--muted)}.disclaimer{font-size:11px;color:#b4c4d8;margin-top:12px;line-height:1.5}
+main{display:grid;gap:14px;min-width:0}.chartpanel{padding:10px;overflow:hidden}.charttop{display:flex;justify-content:space-between;align-items:center;padding:5px 5px 10px;gap:10px;flex-wrap:wrap}
+.pill{font-size:11px;color:#b8d1ee;border:1px solid #344a64;border-radius:99px;padding:5px 9px}
+.chartbox{height:430px;min-height:320px;border-radius:12px;overflow:hidden;background:#080f19}
+.signalgrid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px}
+.metric{background:#0a1727;border:1px solid var(--line);border-radius:13px;padding:13px;min-width:0}
+.metric .k{font-size:11px;color:var(--muted)}.metric .v{font-size:19px;font-weight:800;margin-top:5px;overflow-wrap:anywhere}.sub{font-size:11px;color:var(--muted);margin-top:4px}
+.signal{display:flex;align-items:center;gap:12px}.signalicon{height:48px;width:48px;flex-shrink:0;border-radius:14px;display:grid;place-items:center;font-size:25px;font-weight:900;background:#24374a}
+.buy{color:var(--green)}.sell{color:var(--red)}.wait{color:var(--gold)}
+.count{font-variant-numeric:tabular-nums;font-size:24px;font-weight:900;letter-spacing:1px}
+.hint{background:#101f32;border:1px solid #2a4260;padding:12px;border-radius:12px;font-size:12px;color:#c4d4e7;margin-top:12px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.step{padding:11px;border:1px solid var(--line);border-radius:12px;background:#0a1727}.step b{display:block;font-size:12px;margin-bottom:4px}.step span{font-size:11px;color:var(--muted)}
+.footer{max-width:1200px;margin:auto;padding:0 14px 26px;color:var(--muted);font-size:11px}
+@media(max-width:850px){.wrap{grid-template-columns:1fr}.chartbox{height:360px}.signalgrid{grid-template-columns:1fr 1fr}.signalgrid .metric:first-child{grid-column:1/-1}.steps{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><div class="logo">↗</div><div><h1>Quotex Signal Lab <span style="color:var(--green)">V3</span></h1><p>Market chart • candle-based analysis • signal expiry timer</p></div></header>
+<div class="wrap">
+<aside class="panel">
+<h2>⚙️ Market setup</h2>
+<label for="market">Trading pair / market</label>
+<select id="market">
+<optgroup label="Forex"><option value="EUR/USD">EUR/USD</option><option value="GBP/USD">GBP/USD</option><option value="USD/JPY">USD/JPY</option><option value="AUD/USD">AUD/USD</option><option value="USD/CAD">USD/CAD</option><option value="USD/CHF">USD/CHF</option><option value="NZD/USD">NZD/USD</option><option value="EUR/GBP">EUR/GBP</option><option value="EUR/JPY">EUR/JPY</option><option value="GBP/JPY">GBP/JPY</option><option value="EUR/CHF">EUR/CHF</option><option value="GBP/CHF">GBP/CHF</option></optgroup>
+<optgroup label="Metals"><option value="XAU/USD">Gold (XAU/USD)</option><option value="XAG/USD">Silver (XAG/USD)</option></optgroup>
+<optgroup label="Crypto"><option value="BTC/USD">Bitcoin (BTC/USD)</option><option value="ETH/USD">Ethereum (ETH/USD)</option><option value="BNB/USD">BNB/USD</option><option value="SOL/USD">SOL/USD</option></optgroup>
+<optgroup label="Indices (availability depends on data provider)"><option value="NASDAQ:NDX">NASDAQ 100</option><option value="SP:SPX">S&amp;P 500</option><option value="DJ:DJI">Dow Jones</option></optgroup></select>
+<label for="tf">Candlestick timeframe</label>
+<select id="tf"><option value="1min">1 minute</option><option value="5min">5 minutes</option><option value="15min">15 minutes</option><option value="30min">30 minutes</option><option value="1h">1 hour</option><option value="4h">4 hours</option></select>
+<label for="key">Twelve Data API key</label><input id="key" type="password" autocomplete="off" placeholder="Paste API key (required for analysis)">
+<div class="small" style="margin-top:6px">The chart can load without your key. Candle analysis needs a supported data API.</div>
+<button id="analyze">🔎 Analyze market</button>
+<button id="reset" style="background:#23364d;color:#dbe8f7;margin-top:8px">Clear signal / stop timer</button>
+<div class="disclaimer"><b>Important:</b> This is an educational indicator, not an automatic Quotex connection. No tool can promise profit or zero losses. OTC prices may differ from public market feeds. Never risk money you cannot afford to lose.</div>
+</aside>
+<main>
+<section class="panel chartpanel"><div class="charttop"><h2 id="charttitle" style="margin:0">EUR/USD · 1 minute</h2><span class="pill">TradingView chart</span></div><div id="chart" class="chartbox"></div></section>
+<section class="panel">
+<h2>📊 Latest analysis</h2>
+<div class="signalgrid">
+<div class="metric"><div class="k">SIGNAL</div><div class="signal"><div id="signalicon" class="signalicon wait">…</div><div><div id="signal" class="v wait">NOT ANALYZED</div><div id="reason" class="sub">Tap Analyze market to check candle data.</div></div></div></div>
+<div class="metric"><div class="k">SIGNAL EXPIRY COUNTDOWN</div><div id="countdown" class="count">--:--</div><div id="expires" class="sub">Starts after a valid signal</div></div>
+<div class="metric"><div class="k">DATA / CONFIDENCE</div><div id="confidence" class="v">—</div><div id="dataStatus" class="sub">No candle data yet</div></div>
+</div>
+<div class="hint" id="explain">How to use: choose a pair and timeframe, enter your data API key, then analyze. BUY/SELL is a technical indicator result—not a promise. WAIT means the conditions are unclear.</div>
+</section>
+<section class="panel"><h2>🧭 Beginner guide</h2><div class="steps"><div class="step"><b>1. Check the chart</b><span>Look for strong candles and avoid sudden news spikes.</span></div><div class="step"><b>2. Respect expiry</b><span>Expiry is set to the selected timeframe. Do not reuse an expired signal.</span></div><div class="step"><b>3. Protect your money</b><span>Practice on demo first. There is no guaranteed win rate.</span></div></div></section>
+</main></div>
+<div class="footer">Data providers may limit symbols, candle history, and API requests. This site does not place trades, access Quotex accounts, or verify your actual win rate.</div>
+<script>
+const $=id=>document.getElementById(id);
+const durations={'1min':60,'5min':300,'15min':900,'30min':1800,'1h':3600,'4h':14400};
+let timer=null, expiryAt=null;
+function tvSymbol(v){
+ const map={'EUR/USD':'FX:EURUSD','GBP/USD':'FX:GBPUSD','USD/JPY':'FX:USDJPY','AUD/USD':'FX:AUDUSD','USD/CAD':'FX:USDCAD','USD/CHF':'FX:USDCHF','NZD/USD':'FX:NZDUSD','EUR/GBP':'FX:EURGBP','EUR/JPY':'FX:EURJPY','GBP/JPY':'FX:GBPJPY','EUR/CHF':'FX:EURCHF','GBP/CHF':'FX:GBPCHF','XAU/USD':'OANDA:XAUUSD','XAG/USD':'OANDA:XAGUSD','BTC/USD':'COINBASE:BTCUSD','ETH/USD':'COINBASE:ETHUSD','BNB/USD':'BINANCE:BNBUSDT','SOL/USD':'BINANCE:SOLUSDT','NASDAQ:NDX':'NASDAQ:NDX','SP:SPX':'SP:SPX','DJ:DJI':'DJ:DJI'};
+ return map[v]||v;
+}
+function renderChart(){const pair=$('market').value, tf=$('tf').value; $('charttitle').textContent=pair+' · '+tf.replace('min',' minute').replace('h',' hour'); let interval=({'1min':'1','5min':'5','15min':'15','30min':'30','1h':'60','4h':'240'})[tf]; $('chart').innerHTML='<iframe title="Live candlestick chart" style="width:100%;height:100%;border:0" src="https://s.tradingview.com/widgetembed/?frameElementId=tvchart&symbol='+encodeURIComponent(tvSymbol(pair))+'&interval='+interval+'&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=0b1727&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1&studies=%5B%22MASimple%40tv-basicstudies%22%5D"></iframe>';}
+function stopTimer(){if(timer)clearInterval(timer);timer=null;expiryAt=null;$('countdown').textContent='--:--';$('expires').textContent='Starts after a valid signal';}
+function startTimer(seconds){stopTimer();expiryAt=Date.now()+seconds*1000; function tick(){let left=Math.max(0,Math.ceil((expiryAt-Date.now())/1000));let h=Math.floor(left/3600),m=Math.floor((left%3600)/60),s=left%60;$('countdown').textContent=h>0?String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'):String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); if(left===0){clearInterval(timer);timer=null;$('signal').textContent='EXPIRED';$('signal').className='v wait';$('signalicon').textContent='⌛';$('signalicon').className='signalicon wait';$('expires').textContent='Do not reuse this signal. Analyze again.';$('explain').textContent='This signal has expired. Check fresh candle data before making any decision.';} } tick();timer=setInterval(tick,250);}
+function resetSignal(){stopTimer();$('signal').textContent='NOT ANALYZED';$('signal').className='v wait';$('signalicon').textContent='…';$('signalicon').className='signalicon wait';$('reason').textContent='Tap Analyze market to check candle data.';$('confidence').textContent='—';$('dataStatus').textContent='No candle data yet';$('explain').textContent='Choose a pair and timeframe, then analyze. A signal is only an indicator, not a promise.';}
+function intervalFor(tf){return tf;}
+function avg(arr,n){return arr.slice(-n).reduce((a,b)=>a+b,0)/n}
+async function analyze(){
+ const key=$('key').value.trim(),symbol=$('market').value,tf=$('tf').value;
+ if(!key){$('dataStatus').textContent='API key required';$('explain').textContent='Get a Twelve Data API key, paste it in the API key field, then tap Analyze market. Keep in mind browser keys can be seen by visitors if you publish this page.';return;}
+ $('analyze').disabled=true;$('analyze').textContent='Analyzing candles…';stopTimer();
+ try{
+  let apiSymbol=symbol;
+  if(symbol==='NASDAQ:NDX')apiSymbol='NDX'; if(symbol==='SP:SPX')apiSymbol='SPX';if(symbol==='DJ:DJI')apiSymbol='DJI';
+  const url='https://api.twelvedata.com/time_series?symbol='+encodeURIComponent(apiSymbol)+'&interval='+encodeURIComponent(tf)+'&outputsize=80&apikey='+encodeURIComponent(key);
+  const res=await fetch(url);const data=await res.json();
+  if(!data.values||data.values.length<30)throw new Error(data.message||'Not enough candles or this pair is not supported by your data plan.');
+  const candles=data.values.slice().reverse(), closes=candles.map(c=>Number(c.close)), last=candles[candles.length-1],prev=candles[candles.length-2];
+  if(closes.some(n=>!Number.isFinite(n)))throw new Error('Provider returned invalid candle prices.');
+  const ema=(vals,p)=>{let k=2/(p+1),e=vals[0];for(let i=1;i<vals.length;i++)e=vals[i]*k+e*(1-k);return e;};
+  const e9=ema(closes.slice(-40),9),e21=ema(closes.slice(-60),21);
+  const diffs=[];for(let i=1;i<closes.length;i++)diffs.push(closes[i]-closes[i-1]);
+  const recent=diffs.slice(-14),gains=recent.map(x=>Math.max(x,0)),losses=recent.map(x=>Math.max(-x,0));
+  const ag=gains.reduce((a,b)=>a+b,0)/14,al=losses.reduce((a,b)=>a+b,0)/14, rsi=al===0?100:100-(100/(1+ag/al));
+  const bull=Number(last.close)>Number(last.open),bear=Number(last.close)<Number(last.open);
+  let signal='WAIT',why='Trend and momentum do not agree.';
+  if(e9>e21&&rsi>=52&&rsi<=70&&bull){signal='BUY';why='EMA 9 is above EMA 21, RSI supports upward momentum, and the latest candle is bullish.';}
+  else if(e9<e21&&rsi<=48&&rsi>=30&&bear){signal='SELL';why='EMA 9 is below EMA 21, RSI supports downward momentum, and the latest candle is bearish.';}
+  $('signal').textContent=signal;$('signal').className='v '+(signal==='BUY'?'buy':signal==='SELL'?'sell':'wait');
+  $('signalicon').textContent=signal==='BUY'?'↑':signal==='SELL'?'↓':'–';$('signalicon').className='signalicon '+(signal==='BUY'?'buy':signal==='SELL'?'sell':'wait');
+  $('reason').textContent=why;$('confidence').textContent='Not verified';$('dataStatus').textContent='EMA9 '+e9.toFixed(5)+' · EMA21 '+e21.toFixed(5)+' · RSI '+rsi.toFixed(1);
+  const seconds=durations[tf]; if(signal!=='WAIT'){startTimer(seconds);$('expires').textContent='Expires in '+tf+' from analysis time';}else{$('countdown').textContent='—';$('expires').textContent='No timer: WAIT signal';}
+  $('explain').textContent='Latest provider candle: '+last.datetime+'. This rule-based result has no proven win rate. Test it on a demo account over many trades before considering real money.';
+ }catch(e){$('signal').textContent='NO DATA';$('signal').className='v wait';$('signalicon').textContent='!';$('signalicon').className='signalicon wait';$('reason').textContent='Could not analyze this market.';$('confidence').textContent='—';$('dataStatus').textContent=(e.message||'Request failed').slice(0,120);$('explain').textContent='Check your API key, internet connection, supported symbol, and API request limit. Some markets and OTC pairs are not available from this data provider.';}
+ finally{$('analyze').disabled=false;$('analyze').textContent='🔎 Analyze market';}
+}
+$('market').addEventListener('change',()=>{renderChart();resetSignal()});$('tf').addEventListener('change',()=>{renderChart();resetSignal()});$('analyze').addEventListener('click',analyze);$('reset').addEventListener('click',resetSignal);
+renderChart();
+</script></body></html>
