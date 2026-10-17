@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quotex Signal Lab Lite</title>
+<style>
+:root{color-scheme:dark;--bg:#07111f;--panel:#101e31;--line:#263a55;--muted:#9eafc8;--text:#f0f5ff;--green:#30d6a5;--red:#ff7188;--blue:#86a5ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+header{max-width:1000px;margin:auto;padding:20px 15px 12px}h1{margin:0;font-size:25px}p{color:var(--muted);line-height:1.45;margin:7px 0}
+main{max-width:1000px;margin:auto;padding:10px 15px 36px;display:grid;gap:14px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;min-width:0}
+label{display:block;color:var(--muted);font-size:13px;margin:0 0 6px}select,input,button{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;background:#081527;color:var(--text);font:inherit}
+button{background:var(--blue);color:#061126;font-weight:800;border:0;cursor:pointer;margin-top:10px}button:disabled{opacity:.55}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.muted{font-size:12px;color:var(--muted)}.marketgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.market{background:#091629;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:left;cursor:pointer}.market.active{border-color:var(--blue);outline:1px solid var(--blue)}.market b{display:block;font-size:14px}.market span{font-size:12px;color:var(--muted)}
+#tv{display:block;width:100%;height:380px;border:0;border-radius:12px;background:#081527;margin-top:12px}
+.result{padding:12px;border-radius:12px;background:#081527;margin-top:12px}.signal{font-size:30px;font-weight:850}.buy{color:var(--green)}.sell{color:var(--red)}.wait{color:#f8c75b}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.stat{padding:10px;background:#101e31;border-radius:9px;min-width:0}.stat span{display:block;color:var(--muted);font-size:11px}.stat strong{display:block;margin-top:4px;font-size:16px;overflow-wrap:anywhere}
+@media(max-width:560px){.row{grid-template-columns:1fr}.marketgrid{grid-template-columns:repeat(2,minmax(0,1fr))}#tv{height:340px}.stats{grid-template-columns:repeat(2,1fr)}}
+</style></head><body>
+<header><h1>Quotex Signal Lab Lite</h1><p>Market watch • Candlestick chart • Indicator analysis</p></header>
+<main>
+<section class="panel"><h2 style="font-size:18px;margin:0">1. Select a market</h2><p class="muted">Includes common forex, metals, crypto and index symbols. These are market-data symbols, not a verified list of every instrument offered by Quotex. Availability depends on your data provider and region.</p>
+<div class="marketgrid" id="markets"></div>
+<div class="row" style="margin-top:12px"><div><label for="interval">Timeframe</label><select id="interval"><option value="1min">1 minute</option><option value="5min">5 minutes</option><option value="15min">15 minutes</option><option value="30min">30 minutes</option><option value="1h">1 hour</option><option value="4h">4 hours</option></select></div><div><label for="kind">Market type</label><select id="kind"><option value="all">All markets</option><option value="forex">Forex</option><option value="metal">Metals</option><option value="crypto">Crypto</option><option value="index">Indices</option></select></div></div>
+<iframe id="tv" title="TradingView market chart" src="https://www.tradingview.com/widgetembed/?symbol=FX%3AEURUSD&interval=1&hidesidetoolbar=1&symboledit=1&saveimage=0&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1" scrolling="no" allowtransparency="true"></iframe>
+</section>
+<section class="panel"><h2 style="font-size:18px;margin:0">2. Analyze signal</h2><p class="muted">Add your Twelve Data API key to request real candle data. The key is not saved by this page.</p><label for="api">Twelve Data API key</label><input id="api" type="password" autocomplete="off" placeholder="Paste API key">
+<button id="analyze">Analyze Selected Market</button><div id="result" class="result" aria-live="polite"><div class="signal wait">WAIT</div><p>Select a market and tap Analyze.</p></div>
+</section>
+<section class="panel"><h2 style="font-size:18px;margin:0">3. Winning rate / performance</h2><div class="result"><div class="signal wait" id="rate">Not measured</div><p id="rateText">A reliable win rate cannot be calculated from one signal. This version does not invent a percentage. A meaningful estimate needs historical candle data, clear entry/expiry rules, and out-of-sample backtesting.</p></div><p class="muted">Signals are not guarantees. OTC instruments can use a different price feed from ordinary forex markets, so external candles may not match Quotex OTC prices.</p></section>
+</main>
+<script>
+const markets=[
+{name:"EUR/USD",cat:"forex",td:"EUR/USD",tv:"FX:EURUSD"},
+{name:"GBP/USD",cat:"forex",td:"GBP/USD",tv:"FX:GBPUSD"},
+{name:"USD/JPY",cat:"forex",td:"USD/JPY",tv:"FX:USDJPY"},
+{name:"AUD/USD",cat:"forex",td:"AUD/USD",tv:"FX:AUDUSD"},
+{name:"USD/CAD",cat:"forex",td:"USD/CAD",tv:"FX:USDCAD"},
+{name:"USD/CHF",cat:"forex",td:"USD/CHF",tv:"FX:USDCHF"},
+{name:"NZD/USD",cat:"forex",td:"NZD/USD",tv:"FX:NZDUSD"},
+{name:"EUR/GBP",cat:"forex",td:"EUR/GBP",tv:"FX:EURGBP"},
+{name:"EUR/JPY",cat:"forex",td:"EUR/JPY",tv:"FX:EURJPY"},
+{name:"GBP/JPY",cat:"forex",td:"GBP/JPY",tv:"FX:GBPJPY"},
+{name:"EUR/CHF",cat:"forex",td:"EUR/CHF",tv:"FX:EURCHF"},
+{name:"GBP/CHF",cat:"forex",td:"GBP/CHF",tv:"FX:GBPCHF"},
+{name:"XAU/USD Gold",cat:"metal",td:"XAU/USD",tv:"OANDA:XAUUSD"},
+{name:"XAG/USD Silver",cat:"metal",td:"XAG/USD",tv:"OANDA:XAGUSD"},
+{name:"BTC/USD",cat:"crypto",td:"BTC/USD",tv:"COINBASE:BTCUSD"},
+{name:"ETH/USD",cat:"crypto",td:"ETH/USD",tv:"COINBASE:ETHUSD"},
+{name:"BNB/USD",cat:"crypto",td:"BNB/USD",tv:"BINANCE:BNBUSDT"},
+{name:"SOL/USD",cat:"crypto",td:"SOL/USD",tv:"COINBASE:SOLUSD"},
+{name:"NASDAQ 100",cat:"index",td:"NDX",tv:"NASDAQ:NDX"},
+{name:"S&P 500",cat:"index",td:"SPX",tv:"SP:SPX"},
+{name:"Dow Jones",cat:"index",td:"DJI",tv:"DJ:DJI"}
+];
+let selected=markets[0];
+const $=id=>document.getElementById(id);
+function renderMarkets(){const filter=$("kind").value;const list=markets.filter(m=>filter==="all"||m.cat===filter);$("markets").innerHTML=list.map(m=>'<button type="button" class="market '+(selected.name===m.name?'active':'')+'" data-name="'+m.name+'"><b>'+m.name+'</b><span>'+({forex:"Forex",metal:"Metals",crypto:"Crypto",index:"Index"}[m.cat])+'</span></button>').join("");document.querySelectorAll(".market").forEach(b=>b.addEventListener("click",()=>{selected=markets.find(m=>m.name===b.dataset.name);renderMarkets();updateChart()}))}
+function updateChart(){const map={"1min":"1","5min":"5","15min":"15","30min":"30","1h":"60","4h":"240"};$("tv").src="https://www.tradingview.com/widgetembed/?symbol="+encodeURIComponent(selected.tv)+"&interval="+map[$("interval").value]+"&hidesidetoolbar=1&symboledit=1&saveimage=0&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1"}
+$("kind").addEventListener("change",renderMarkets);$("interval").addEventListener("change",updateChart);
+function ema(v,p){let k=2/(p+1),o=[v[0]],x=v[0];for(let i=1;i<v.length;i++){x=v[i]*k+x*(1-k);o.push(x)}return o}
+function rsi(v,p=14){if(v.length<=p)return 50;let g=0,l=0;for(let i=1;i<=p;i++){let d=v[i]-v[i-1];g+=Math.max(d,0);l+=Math.max(-d,0)}g/=p;l/=p;for(let i=p+1;i<v.length;i++){let d=v[i]-v[i-1];g=(g*(p-1)+Math.max(d,0))/p;l=(l*(p-1)+Math.max(-d,0))/p}return l===0?100:100-100/(1+g/l)}
+$("analyze").addEventListener("click",async()=>{const key=$("api").value.trim();if(!key){$("result").innerHTML='<div class="signal wait">API KEY NEEDED</div><p>Paste your Twelve Data API key first.</p>';return}
+const btn=$("analyze");btn.disabled=true;btn.textContent="Analyzing…";$("result").innerHTML="<p>Loading candle data…</p>";
+try{const url="https://api.twelvedata.com/time_series?symbol="+encodeURIComponent(selected.td)+"&interval="+encodeURIComponent($("interval").value)+"&outputsize=100&apikey="+encodeURIComponent(key);const response=await fetch(url);const data=await response.json();if(!response.ok||data.status==="error"||!data.values)throw new Error(data.message||"No candle data. Check key, market availability, or API quota.");const c=data.values.slice().reverse(),v=c.map(x=>Number(x.close)).filter(Number.isFinite);if(v.length<30)throw new Error("Not enough candles for indicator analysis.");const a=ema(v,9),b=ema(v,21),r=rsi(v),last=v[v.length-1];let s="WAIT",cls="wait",why="EMA and RSI do not agree on a direction.";if(a[a.length-1]>b[b.length-1]&&r>=50&&r<70){s="BUY";cls="buy";why="EMA 9 is above EMA 21 and RSI supports upward momentum."}else if(a[a.length-1]<b[b.length-1]&&r<=50&&r>30){s="SELL";cls="sell";why="EMA 9 is below EMA 21 and RSI supports downward momentum."}
+$("result").innerHTML='<div class="signal '+cls+'">'+s+'</div><p>'+why+'</p><div class="stats"><div class="stat"><span>Market</span><strong>'+selected.name+'</strong></div><div class="stat"><span>Last close</span><strong>'+last.toFixed(5)+'</strong></div><div class="stat"><span>RSI 14</span><strong>'+r.toFixed(1)+'</strong></div><div class="stat"><span>Candles</span><strong>'+v.length+'</strong></div><div class="stat"><span>Latest candle</span><strong style="font-size:12px">'+(c[c.length-1].datetime||"N/A")+'</strong></div></div><p class="muted">Not a guaranteed outcome. External data may differ from Quotex, especially OTC symbols.</p>';
+}catch(e){$("result").innerHTML='<div class="signal wait">ANALYSIS FAILED</div><p>'+String(e.message||e).replace(/[<>&]/g,x=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[x]))+'</p>'}finally{btn.disabled=false;btn.textContent="Analyze Selected Market"}});
+renderMarkets();
+</script></body></html>
