@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: signaledge-ai-market-analyzer
+    runtime: static
+    staticPublishPath: .
