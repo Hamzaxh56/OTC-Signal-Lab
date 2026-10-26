@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: quotex-signal-analyzer
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: .
